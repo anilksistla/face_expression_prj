@@ -1,4 +1,4 @@
-from keras.layers import Dense, Flatten
+from keras.layers import Conv2D, MaxPooling2D, Dropout, Dense, Flatten, AveragePooling2D
 from keras.models import Sequential
 from keras.callbacks import Callback
 import pandas as pd
@@ -17,6 +17,18 @@ config = run.config
 
 config.batch_size = 32
 config.num_epochs = 20
+config.hidden_size = 1000
+config.dense_layer_size = 128
+config.first_layer_convs = 64
+config.first_layer_conv_width = 5
+config.first_layer_conv_height = 5
+config.second_layer_convs = 128
+config.second_layer_conv_width = 5
+config.second_layer_conv_height = 5
+config.third_layer_convs = 512
+config.third_layer_conv_width = 2
+config.third_layer_conv_height = 2
+
 
 input_shape = (48, 48, 1)
 
@@ -53,7 +65,32 @@ train_faces /= 255.
 val_faces /= 255.
 
 model = Sequential()
+
+model.add(Conv2D(config.first_layer_convs,
+    (config.first_layer_conv_width, config.first_layer_conv_height),
+    input_shape=input_shape, strides=(1,1),
+    activation='relu'))
+model.add(AveragePooling2D(pool_size=(2, 2)))
+#model.add(Dropout(0.40))
+
+model.add(Conv2D(config.second_layer_convs,
+    (config.second_layer_conv_width, config.second_layer_conv_height),
+    input_shape=input_shape, strides=(1,1),
+    activation='relu'))
+model.add(AveragePooling2D(pool_size=(2, 2)))
+model.add(Dropout(0.40))
+
+model.add(Conv2D(config.third_layer_convs,
+    (config.third_layer_conv_width, config.third_layer_conv_height),
+    input_shape=input_shape, strides=(1,1),
+    activation='relu'))
+model.add(AveragePooling2D(pool_size=(2, 2)))
+model.add(Dropout(0.20))
+
 model.add(Flatten(input_shape=input_shape))
+model.add(Dropout(0.20))
+model.add(Dense(config.hidden_size, activation='relu'))
+model.add(Dropout(0.20))
 model.add(Dense(num_classes, activation="softmax"))
 
 model.compile(optimizer='adam', loss='categorical_crossentropy',
